@@ -1,30 +1,30 @@
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
-const secretKey = process.env.ACCESS_TOKEN_SECRET;
-
+const accessSecretKey = process.env.ACCESS_TOKEN_SECRET;
+const refreshSecretKey = process.env.REFRESH_TOKEN_SECRET;
 
 exports.refreshToken = (req, res) => {
-  const refreshToken = req.cookies.accessToken;
-  console.log(refreshToken);
-  if (!refreshToken) {
-    return res.status(401).json({ message: 'Refresh token not found' });
+  // Retrieve the "jwt" cookie
+  const jwtToken = req.cookies.refreshToken;
+  if (!jwtToken) {
+    return res.status(401).json({ message: 'JWT token not found' });
   }
 
-  // Verify the refresh token
-  jwt.verify(refreshToken, secretKey, (err, decoded) => {
+  // Verify the JWT token using the refresh token secret key
+  jwt.verify(jwtToken, refreshSecretKey, (err, decoded) => {
+    console.log("refresh token line 15","decoded", decoded, "err", err);
     if (err) {
-      return res.status(403).json({ message: 'Refresh token is invalid' });
+      return res.status(403).json({ message: 'JWT token is invalid' });
     }
-    
+
     // You can use the decoded user information here if needed
+    console.log(decoded);
     const user = decoded;
 
-    // Generate a new access token if needed
-    const newAccessToken = jwt.sign(user, secretKey, { expiresIn: '15m' });
+    // Generate a new access token if needed (using the access token secret key)
+    const newAccessToken = jwt.sign(user, accessSecretKey);
 
     // Return the protected resource
     res.json({ message: 'Authenticated User Profile', user, accessToken: newAccessToken });
   });
-}
-
-
+};

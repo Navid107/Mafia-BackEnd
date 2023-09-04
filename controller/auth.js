@@ -62,19 +62,16 @@ exports.login = async (req, res) => {
     // Generate a JSON Web Token (JWT) with the userId as the payload
     const accessToken = jwt.sign(
       { user: user._id }, secretKey, 
-      { expiresIn: '15m'}
+      { expiresIn: '30m'}
       );
-      console.log('line67',accessToken )
 
       const refreshToken = jwt.sign(
         { user: user._id }, secretRfTkn, 
-        { expiresIn: '7d' }
+        { expiresIn: '24h' }
         );
 
     // Respond with a success message and the JWT
     res.cookie('refreshToken', refreshToken, { httpOnly: true });
-    console.log('line 75 refresh token',refreshToken);
-    
     res.json({ message: 'Logged in successfully', accessToken });
   } catch (error) {
     res.status(500).json({ error: 'Something went wrong' });
