@@ -32,10 +32,10 @@ db.once("open", () => {
 });
 
 
-app.use('/refresh', require('./routes/refresh'));
+app.use('/api/auth/refresh', require('./routes/refresh'));
 // Use the auth routes middleware
 const auth = require("./controller/auth.js");
-app.use("/api/auth/register", auth.register);
+app.use("/api/auth/signup", auth.register);
 app.use("/api/auth/login", auth.login);
 app.use("/api/auth/user", auth.user);
 

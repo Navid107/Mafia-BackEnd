@@ -3,7 +3,7 @@ const router = express.Router();
 const tokenCTR = require('../controller/refreshToken')
 
 // Route for token refresh
-router.get('/refresh',tokenCTR.refreshToken)
+router.get('/',tokenCTR.refreshToken)
 
   
 module.exports = router;

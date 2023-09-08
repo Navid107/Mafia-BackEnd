@@ -3,7 +3,7 @@ const router = express.Router();
 const auth = require('../controller/auth.js');
 
 // Route for user registration
-router.post('/register', auth.register);
+router.post('/signup', auth.register);
 
 // Route for user login
 router.post('/login', auth.login);

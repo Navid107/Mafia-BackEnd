@@ -2,7 +2,7 @@
 const mongoose = require('mongoose');
 
 
-const MONGODB_URI = 'mongodb+srv://mafia8:!17Alex!17@cluster0.nsgf9xi.mongodb.net/?retryWrites=true&w=majority';
+const MONGODB_URI = MONGODB_URI
 
 // Connect to MongoDB
 mongoose.connect(MONGODB_URI, {

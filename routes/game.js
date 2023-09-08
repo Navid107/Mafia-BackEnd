@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 
 // Authentication route - Register a new user
-app.post('/api/register', registerController.register);
+app.post('/api/signup', registerController.register);
 
 // Authentication route - Login
 app.post('/api/login', authController.login);
