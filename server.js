@@ -7,17 +7,18 @@ const authRoutes = require('./routes/authRoute')
 require('dotenv').config();
 const cookieParser = require('cookie-parser'); 
 
-
 const app = express();
 const servers = http.createServer(app);
 
 app.use(bodyParser.json());
-app.use(cookieParser()); ;
+app.use(cookieParser());
+app.use(cors());
+
+
+
 // Replace <your_mongodb_uri> with your actual MongoDB connection URI
 const MONGODB_URI = process.env.MONGODB_URI;
 /// Middleware
-app.use(cors());
-
 
 // Connect to MongoDB
 mongoose.connect(MONGODB_URI, {
@@ -30,6 +31,8 @@ db.on("error", console.error.bind(console, "MongoDB connection error:"));
 db.once("open", () => {
   console.log("Connected to MongoDB");
 });
+
+
 
 
 app.use('/api/auth/refresh', require('./routes/refresh'));
