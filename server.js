@@ -32,8 +32,13 @@ db.once("open", () => {
   console.log("Connected to MongoDB");
 });
 
+/*
+If you have new character to upload into dataBase
+go to characters folders and edit
+and paste it the whole char.js in this 
+area
 
-
+*/
 
 app.use('/api/auth/refresh', require('./routes/refresh'));
 // Use the auth routes middleware
