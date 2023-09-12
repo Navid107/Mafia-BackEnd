@@ -51,6 +51,8 @@ app.use("/api/auth/user", auth.user);
 const gameRoutes = require("./routes/gameRoutes/gameRoutes");
 app.use("/api", gameRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/characters', authRoutes);
+app.use('/api/characters/image/:id', authRoutes);
 
 const PORT = process.env.PORT || 3500;
 

@@ -1,5 +1,5 @@
 // gameController.js
-
+const Character = require('../models/char');
 // Import necessary models and modules
 const Game = require('../models/game.js');
 const Player = require('../models/player.js');
@@ -39,5 +39,30 @@ exports.startGame = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+exports.chars = async (req, res) => {
+  try {
+    const characters = await Character.find(); // Retrieve all characters from the database
+    res.json(characters); // Send the characters as a JSON response
+  } catch (error) {
+    console.error('Error retrieving characters:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+}
+exports.image = async (req, res) => {
+  try {
+    const characterId = req.params.id;
+    const character = await Character.findById(characterId);
 
+    if (!character) {
+      return res.status(404).json({ message: 'Character not found' });
+    }
+
+    // Send the image data as a response
+    res.set('Content-Type', character.image.contentType);
+    res.send(character.image.data);
+  } catch (error) {
+    console.error('Error retrieving character image:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+}
 // Add more controller functions as needed for the game logic

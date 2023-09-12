@@ -8,11 +8,15 @@ const gameController = require('../../controller/gameController.js');
 router.post('/game', gameController.createGame);
 
 // Route to assign roles to players
-router.post('/game/assign-roles', gameController.assignRoles);
+router.post('/assign-roles', gameController.assignRoles);
 
 // Route to start the game
-router.post('/game/start', gameController.startGame);
+router.post('/start', gameController.startGame);
 
 // Add more routes as needed for the game logic
+router.get('/characters', gameController.chars);
+
+router.get('/characters/image/:id', gameController.image);
+  
 
 module.exports = router;
