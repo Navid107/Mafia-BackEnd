@@ -1,68 +1,64 @@
-// gameController.js
-const Character = require('../models/char');
-// Import necessary models and modules
 const Game = require('../models/game.js');
+const User = require('../models/user.js');
+const Generate = require('../middleware/generateUniqueGameKey.js');
 const Player = require('../models/player.js');
-// Add any other required models and modules
 
-// Controller function to create a new game
-exports.createGame = async (req, res) => {
+
+exports.hostGame = async (req, res) => {
   try {
-    // Implement the logic to create a new game here
-    // For example, create a new Game instance and save it to the database
-    // Return the game object as the response
-    res.status(201).json({ message: 'Game created successfully', game: newGame });
+    const userId = req.body._id;
+    // Generate a unique game key
+    const gameKey = Generate();
+    const user = await User.findOne({ userId });
+    console.log(user); 
+    // Create a new game session in the database with the game key and host user
+    const newGame = new Game({
+      gameKey,
+      host: user, // Assuming you have user authentication
+      players: [], // Add the host as the first player
+      // Add other game properties as needed
+    });
+  
+    // Save the game session to the database
+    await newGame.save();
+    console.log('game key ',gameKey);
+    res.status(201).json({ message: 'Game created successfully', gameKey });
   } catch (err) {
-    res.status(500).json({ message: 'Server error' });
+    console.error(err);
+    res.status(500).json({ message: 'Failed to create a game' });
   }
 };
 
-// Controller function to assign roles to players
-exports.assignRoles = async (req, res) => {
+exports.joinGame = async (req, res) => {
   try {
-    // Implement the logic to assign roles to players here
-    // For example, retrieve the players from the request body
-    // Assign roles randomly and save the updated players to the database
-    res.json({ message: 'Roles assigned successfully' });
-  } catch (err) {
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
-// Controller function to start the game
-exports.startGame = async (req, res) => {
-  try {
-    // Implement the logic to start the game here
-    // For example, update the game status to "started" and save it to the database
-    res.json({ message: 'Game started successfully' });
-  } catch (err) {
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-exports.chars = async (req, res) => {
-  try {
-    const characters = await Character.find(); // Retrieve all characters from the database
-    res.json(characters); // Send the characters as a JSON response
-  } catch (error) {
-    console.error('Error retrieving characters:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-}
-exports.image = async (req, res) => {
-  try {
-    const characterId = req.params.id;
-    const character = await Character.findById(characterId);
-
-    if (!character) {
-      return res.status(404).json({ message: 'Character not found' });
+    const gameKey = req.body.gameKey; // Get the game key from the request
+    const userId = req.body.userId;
+    const name = req.body.name;
+    console.log('game key ',gameKey,'userID', userId,'name' ,name);
+    // Validate the game key and find the game
+    const game = await Game.findOne({ gameKey });
+    
+    if (!game) {
+      return res.status(404).json({ message: 'Game not found' });
     }
 
-    // Send the image data as a response
-    res.set('Content-Type', character.image.contentType);
-    res.send(character.image.data);
-  } catch (error) {
-    console.error('Error retrieving character image:', error);
-    res.status(500).json({ message: 'Server error' });
+    // Check if the user is already in the game
+    if (game.players.find((player) => player._id.toString() === userId)) {
+      return res.status(200).json({ message: 'You are already in this game' });
+    }
+
+    // Add the user to the list of players with their nickname
+    const newPlayer = new Player({
+      _id: userId,
+      name: name,
+      role: '',
+      side: '',
+    });
+    game.players.push(newPlayer);
+    await game.save();
+    res.status(200).json({ message: 'Joined the game successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Failed to join the game' });
   }
-}
-// Add more controller functions as needed for the game logic
+};

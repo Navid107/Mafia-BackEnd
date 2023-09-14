@@ -61,12 +61,16 @@ exports.login = async (req, res) => {
 
     // Generate a JSON Web Token (JWT) with the userId as the payload
     const accessToken = jwt.sign(
-      { user: user.name,  }, secretKey, 
+      { 
+        user: user.name,
+        userId: user._id
+        },
+         secretKey, 
       { expiresIn: '30m'}
       );
 
       const refreshToken = jwt.sign(
-        { user: user.name }, secretRfTkn, 
+        { userId: user._id }, secretRfTkn, 
         { expiresIn: '24h' }
         );
 

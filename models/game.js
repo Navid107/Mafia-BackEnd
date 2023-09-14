@@ -1,12 +1,10 @@
-// models/game.js
 const mongoose = require('mongoose');
 
 const gameSchema = new mongoose.Schema({
+  gameKey: String,
+  host: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   players: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Player' }],
-  isStarted: { type: Boolean, default: false },
-  // Add more fields as needed to represent game state and settings
+  // Add other game properties as needed
 });
 
-const Game = mongoose.model('Game', gameSchema);
-
-module.exports = Game;
+module.exports = mongoose.model('Game', gameSchema);

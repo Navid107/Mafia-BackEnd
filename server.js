@@ -42,17 +42,13 @@ area
 
 app.use('/api/auth/refresh', require('./routes/refresh'));
 // Use the auth routes middleware
-const auth = require("./controller/auth.js");
-app.use("/api/auth/signup", auth.register);
-app.use("/api/auth/login", auth.login);
-app.use("/api/auth/user", auth.user);
+const auth = require("./routes/authRoute");
+app.use("/api/auth", auth)
 
 
 const gameRoutes = require("./routes/gameRoutes/gameRoutes");
-app.use("/api", gameRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/characters', authRoutes);
-app.use('/api/characters/image/:id', authRoutes);
+app.use("/api/game", gameRoutes);
+
 
 const PORT = process.env.PORT || 3500;
 

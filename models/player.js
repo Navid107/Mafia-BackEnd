@@ -1,10 +1,9 @@
-// models/player.js
 const mongoose = require('mongoose');
 
-const playerSchema = new mongoose.Schema({
+const playerSchema = new mongoose.Schema({ 
   name: { type: String, required: true },
-  role: { type: String, enum: ['Mafia', 'Townsperson'], required: true },
-  isAlive: { type: Boolean, default: true },
+  role: { type: String, required: true },
+  side: { type: String, required: true },
   // Add more fields as needed for player attributes and game interactions
 });
 
