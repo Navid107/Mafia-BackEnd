@@ -47,7 +47,7 @@ exports.joinGame = async (req, res) => {
       return res.status(200).json({ message: 'You are already in this game' });
     }
 
-    // Add the user to the list of players with their nickname
+    // Add the user to the list of players 
     const newPlayer = new Player({
       _id: userId,
       name: name,
@@ -62,3 +62,15 @@ exports.joinGame = async (req, res) => {
     res.status(500).json({ message: 'Failed to join the game' });
   }
 };
+
+exports.lobbyGame = async (req, res) => {
+  try{ 
+    const host = req.body._id;
+    const lobby = await Game.find({host});
+    console.log(lobby.host);
+    res.sendStatus(200).json(lobby.players);
+  }
+    catch(e){console.log(e)
+    }
+
+}
