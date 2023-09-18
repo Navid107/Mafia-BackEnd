@@ -4,7 +4,10 @@ const gameSchema = new mongoose.Schema({
   gameKey: String,
   host: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   lobbyName: String,
-  players: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Player' }],
+  players: [ {
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    name: String,
+  },],
   // Add other game properties as needed
 });
 

@@ -3,7 +3,6 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const http = require("http");
 const mongoose = require("mongoose");
-const authRoutes = require('./routes/authRoute')
 require('dotenv').config();
 const cookieParser = require('cookie-parser'); 
 
@@ -44,7 +43,6 @@ app.use('/api/auth/refresh', require('./routes/refresh'));
 // Use the auth routes middleware
 const auth = require("./routes/authRoute");
 app.use("/api/auth", auth)
-
 
 const gameRoutes = require("./routes/gameRoutes/gameRoutes");
 app.use("/api/game", gameRoutes);

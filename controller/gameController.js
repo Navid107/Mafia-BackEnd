@@ -2,7 +2,7 @@ const Game = require('../models/game.js');
 const User = require('../models/user.js');
 const Generate = require('../middleware/generateUniqueGameKey.js');
 const Player = require('../models/player.js');
-
+const Character = require('../models/char.js');
 
 exports.hostGame = async (req, res) => {
   try {
@@ -34,7 +34,6 @@ exports.hostGame = async (req, res) => {
   }
 };
 
-
 exports.joinGame = async (req, res) => {
   try {
     const gameKey = req.body.gameKey; // Get the game key from the request
@@ -53,11 +52,8 @@ exports.joinGame = async (req, res) => {
       return res.status(200).json({ message: 'You are already in this game' });
     }
 
-    // Add the user to the list of players 
-    const newPlayer = new Player({
-      _id: userId,
-    });
-    game.players.push(newPlayer);
+    game.players.push({userId, name});
+    console.log('line 56', userId, name);
     await game.save();
     res.status(200).json({ message: 'Joined the game successfully' });
   } catch (err) {
@@ -79,5 +75,18 @@ exports.lobbyGame = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Failed to retrieve lobbies' });
+  }
+};
+
+exports.charsGame = async (req, res) => {
+  try {
+    // Retrieve character data from the database
+    const characters = await Character.find();
+
+    // Send the character data as JSON response
+    res.json(characters);
+  } catch (error) {
+    console.error('Error fetching characters:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
