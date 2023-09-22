@@ -9,5 +9,6 @@ router.post('/host', gameController.hostGame);
 router.post('/join', gameController.joinGame);
 router.get('/lobby', gameController.lobbyGame);
 router.get('/character', gameController.charsGame);
+router.post('/start', gameController.startGame);
 
 module.exports = router;
