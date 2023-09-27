@@ -1,9 +1,15 @@
 const mongoose = require('mongoose');
 
-
 const tableSchema = new mongoose.Schema({
-  players: [ { type: mongoose.Schema.Types.ObjectId, ref: 'Player' },]
+    gameKey: String,
+    host: String,
+    players: {
+        userID: String,
+        name: String,
+        char: {}
+        
+    },
 });
-const User = mongoose.model('Table', userSchema);
+const Table = mongoose.model('Table', tableSchema);
 
-module.exports = User;
+module.exports = Table;
