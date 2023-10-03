@@ -8,6 +8,8 @@ const gameController = require('../../controller/gameController.js');
 router.post('/host', gameController.hostGame);
 router.post('/join', gameController.joinGame);
 router.post('/lobby', gameController.lobbyGame);
+router.post('/lobbies', gameController.lobbies);
+
 router.get('/character', gameController.charsGame);
 router.post('/start', gameController.startGame);
 router.post('/table' , gameController.tableGame);

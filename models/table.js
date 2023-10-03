@@ -3,12 +3,8 @@ const mongoose = require('mongoose');
 const tableSchema = new mongoose.Schema({
     gameKey: String,
     host: String,
-    players: {
-        userID: String,
-        name: String,
-        char: {}
-        
-    },
+    players: Array
+    
 });
 const Table = mongoose.model('Table', tableSchema);
 
