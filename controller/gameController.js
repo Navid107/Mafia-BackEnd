@@ -97,11 +97,11 @@ exports.lobbyGame = async (req, res) => {
 };
 
 exports.charsGame = async (req, res) => {
-
   try {
     // Retrieve character data from the database
     const characters = await Character.find();
 
+//console.log('found char',characters)
     // Send the character data as JSON response
     res.json(characters);
   } catch (error) {
@@ -116,6 +116,7 @@ exports.startGame = async (req, res) => {
     const userId = req.body.userId
     // Fetch the game by ID
     const game = await Game.find({gameKey: gameKey});
+
     console.log('game host',game[0].host , 'userID', userId);
     if (!game) {
       return res.status(404).json({ message: 'Game not found' });
@@ -144,7 +145,7 @@ exports.startGame = async (req, res) => {
           players.push({
             userId: player.userId,
             name: player.name,
-            char: player.character
+            char: player.character.name
           })
         });
       }
@@ -172,7 +173,7 @@ exports.startGame = async (req, res) => {
 exports.tableGame = async (req, res) => {
   const gameKey = req.body.gameKey
   const userId = req.body.userId;
-  const playerInfo = ''
+  const playerInfo = []
   const hostData = ''
   console.log('userId',userId,'gameKey', gameKey)
   try {
@@ -187,7 +188,8 @@ exports.tableGame = async (req, res) => {
     sits[0].players.forEach(player => {
       if(player.userId === userId){
         console.log('user found', player)
-        res.json(player)
+        playerInfo.push(player)
+        
       }
     })
   }
@@ -195,7 +197,7 @@ exports.tableGame = async (req, res) => {
  
 
  
-  //res.json(sits)
+  res.json(playerInfo)
   }catch (err){
     console.log("ERROR", err)
     res.status(500).json({ message: 'somethings went wrong' })
