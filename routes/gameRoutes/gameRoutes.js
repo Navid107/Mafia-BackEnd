@@ -14,4 +14,5 @@ router.get('/character', gameController.charsGame);
 router.post('/start', gameController.startGame);
 router.post('/table' , gameController.tableGame);
 
+
 module.exports = router;

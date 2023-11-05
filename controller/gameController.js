@@ -4,7 +4,6 @@ const Generate = require('../middleware/generateUniqueGameKey.js');
 const Player = require('../models/player.js');
 const Character = require('../models/char.js');
 const Table = require('../models/table.js')
-const mongoose = require('mongoose');
 
 exports.hostGame = async (req, res) => {
   try {
@@ -22,14 +21,14 @@ exports.hostGame = async (req, res) => {
       gameKey,
       host: userId, // Use the user object as the host reference
       lobbyName: lobbyName,
-      
+
       // Add other game properties as needed
     });
 
     // Save the game session to the database
     await newGame.save();
 
-   
+
 
 
     res.status(201).json({ message: 'Game created successfully', gameKey, lobbyName });
@@ -51,13 +50,16 @@ exports.joinGame = async (req, res) => {
     if (!game) {
       return res.status(404).json({ message: 'Game not found' });
     }
+    if (game.gameState === 'started') {
+      return res.status(200).json({ message: 'Game already started' });
+    }
 
     // Check if the user is already in the game
-    //if (game.players.find((player) => player._id.toString() === userId)) {
-    //  return res.status(200).json({ message: 'You are already in this game' });
-   // }
-  
-    game.players.push({userId:userId, name:username });
+    if (game.players.find((player) => player.userIdm === userId)) {
+      return res.status(200).json({ message: 'You are already in this game' });
+     }
+
+    game.players.push({ userId: userId, name: username });
     console.log('line 56', userId, username);
     await game.save();
     res.status(200).json({ message: 'Joined the game successfully' });
@@ -73,23 +75,27 @@ exports.lobbyGame = async (req, res) => {
 
     const gameKey = req.body.gameKey;
 
-    console.log("user id", gameKey )
+    console.log("line 76 game key", gameKey)
 
 
     const perGameLobby = await Game.find({ gameKey: gameKey })
+    const tableExists = await Table.find({ gameKey })
     //const host = perGameLobby.host.toString();
-    console.log("player 79", perGameLobby,)
+    //console.log("player 79", perGameLobby,)
 
     // Query the database to find lobbies created by the specific user
     //const lobbies = await Game.find({ host})
-       // Select only the relevant fields
-      // console.log("player ", player)
-      // console.log(`lobbies, ${(lobbies)}`)
+    // Select only the relevant fields
+    // console.log("player ", player)
+    // console.log(`lobbies, ${(lobbies)}`)
     // Use the find method to search for a player with a matching userId
     //console.log('player', player)
     //console.log("lobbies", perGameLobby );
-     res.json(perGameLobby);
-    
+    if(tableExists){
+      res.status(201)
+    }
+    res.json(perGameLobby);
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Failed to retrieve lobbies' });
@@ -101,7 +107,7 @@ exports.charsGame = async (req, res) => {
     // Retrieve character data from the database
     const characters = await Character.find();
 
-//console.log('found char',characters)
+    //console.log('found char',characters)
     // Send the character data as JSON response
     res.json(characters);
   } catch (error) {
@@ -115,9 +121,9 @@ exports.startGame = async (req, res) => {
     const gameKey = req.body.gameKey;
     const userId = req.body.userId
     // Fetch the game by ID
-    const game = await Game.find({gameKey: gameKey});
+    const game = await Game.find({ gameKey: gameKey });
 
-    console.log('game host',game[0].host , 'userID', userId);
+    console.log('game host', game[0].host, 'userID', userId);
     if (!game) {
       return res.status(404).json({ message: 'Game not found' });
     }
@@ -127,7 +133,7 @@ exports.startGame = async (req, res) => {
       return res.status(403).json({ message: 'Only the host can start the game' });
     }
     // Ensure there are enough characters for the players
-  
+
     const characters = await Character.find();
     // Shuffle the available characters array
     const shuffledCharacters = shuffleArray(characters);
@@ -135,24 +141,24 @@ exports.startGame = async (req, res) => {
 
     // Assign characters to players
 
-   const randomPlayer = () => {
-        game[0].players.forEach((player) => {
-          const randomIndex = Math.floor(Math.random() * shuffledCharacters.length);
-          player.character = shuffledCharacters.splice(randomIndex, 1)[0];
-          
-          console.log('this is new',player.character)
+    const randomPlayer = () => {
+      game[0].players.forEach((player) => {
+        const randomIndex = Math.floor(Math.random() * shuffledCharacters.length);
+        player.character = shuffledCharacters.splice(randomIndex, 1)[0];
 
-          players.push({
-            userId: player.userId,
-            name: player.name,
-            char: player.character.name
-          })
-        });
-      }
-    
+        console.log('this is new', player.character)
+
+        players.push({
+          userId: player.userId,
+          name: player.name,
+          char: player.character.name
+        })
+      });
+    }
+
     randomPlayer();
-    
-    console.log('this is playerChars',players);
+
+    console.log('this is playerChars', players);
     // Save the player with assigned characters in a table
     const newTable = new Table({
       gameKey: gameKey,
@@ -160,8 +166,8 @@ exports.startGame = async (req, res) => {
       players,
 
     })
-   
-  await newTable.save();
+    game.gameState = 'started';
+    await newTable.save();
 
     res.status(200).json({ message: 'Game started successfully with assigned characters' });
   } catch (error) {
@@ -174,31 +180,28 @@ exports.tableGame = async (req, res) => {
   const gameKey = req.body.gameKey
   const userId = req.body.userId;
   const playerInfo = []
-  const hostData = ''
-  console.log('userId',userId,'gameKey', gameKey)
+  console.log('userId', userId, 'gameKey', gameKey)
   try {
     // Find Game by key and check if it exists or not
     const sits = await Table.find({ gameKey: gameKey });
+    console.log('Hosts ',sits)
 
-   // console.log('this is new' ,sits,' user id ',userId)
-   console.log('sits host',sits[0].host)
-    if(sits[0].host === userId) {
-      res.json(sits[0])
+
+    if (sits[0].host === userId) {
+      console.log('host info sent')
+      res.status(200).json(sits[0])
     } else {
-    sits[0].players.forEach(player => {
-      if(player.userId === userId){
-        console.log('user found', player)
-        playerInfo.push(player)
-        
-      }
-    })
-  }
-      //console.log('player',sits[0].players)
- 
+      sits[0].players.forEach(player => {
+        if (player.userId === userId) {
+          playerInfo.push(player)
+          console.log('player info sent')
+          res.json(playerInfo)
 
- 
-  res.json(playerInfo)
-  }catch (err){
+        }
+      })
+    }
+
+  } catch (err) {
     console.log("ERROR", err)
     res.status(500).json({ message: 'somethings went wrong' })
   }
@@ -206,22 +209,22 @@ exports.tableGame = async (req, res) => {
 
 exports.lobbies = async (req, res) => {
   try {
+  
     const userId = req.body.userId; // Get the user ID from the query parameter
+
+    console.log("user id", userId)
     
-    console.log("user id", userId )
-
-    const player = await Game.find({ 'players.userId': userId})
-
+    const joined = await Game.find({ 'players.userId': userId })
+  
     // Query the database to find lobbies created by the specific user
-    const lobbies = await Game.find({ host: userId })
-       // Select only the relevant fields
-    console.log(`lobbies, ${(lobbies)}`)
-
+    const hosted = await Game.find({ host: userId })
+    // Select only the relevant fields
+    console.log(`lobbies, ${(hosted)}`)
     // Use the find method to search for a player with a matching userId
     //console.log('player', player)
-    
 
-    res.json({lobbies, player});
+ 
+    res.status(200).json({ hosted, joined });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Failed to retrieve lobbies' });
