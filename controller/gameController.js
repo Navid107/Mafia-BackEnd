@@ -21,15 +21,12 @@ exports.hostGame = async (req, res) => {
       gameKey,
       host: userId, // Use the user object as the host reference
       lobbyName: lobbyName,
-
+      gameState: "false"
       // Add other game properties as needed
     });
 
     // Save the game session to the database
     await newGame.save();
-
-
-
 
     res.status(201).json({ message: 'Game created successfully', gameKey, lobbyName });
   } catch (err) {
@@ -134,9 +131,10 @@ exports.startGame = async (req, res) => {
     }
     // Ensure there are enough characters for the players
 
-    const characters = await Character.find();
+    //const characters = await Character.find();
+    const charID = [1,2,3,4,5,6,7]
     // Shuffle the available characters array
-    const shuffledCharacters = shuffleArray(characters);
+    const shuffledCharacters = shuffleArray(charID);
     const players = []
 
     // Assign characters to players
@@ -144,14 +142,16 @@ exports.startGame = async (req, res) => {
     const randomPlayer = () => {
       game[0].players.forEach((player) => {
         const randomIndex = Math.floor(Math.random() * shuffledCharacters.length);
-        player.character = shuffledCharacters.splice(randomIndex, 1)[0];
+        player.charID = shuffledCharacters.splice(randomIndex, 1)[0];
 
-        console.log('this is new', player.character)
+        console.log('this is new', player.charID)
 
         players.push({
           userId: player.userId,
           name: player.name,
-          char: player.character.name
+          charId: player.charID,
+          death: false
+
         })
       });
     }
@@ -166,7 +166,7 @@ exports.startGame = async (req, res) => {
       players,
 
     })
-    game.gameState = 'started';
+    game.gameState = 'true';
     await newTable.save();
 
     res.status(200).json({ message: 'Game started successfully with assigned characters' });
