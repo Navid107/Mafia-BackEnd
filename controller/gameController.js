@@ -71,10 +71,6 @@ exports.lobbyGame = async (req, res) => {
   try {
 
     const gameKey = req.body.gameKey;
-
-    console.log("line 76 game key", gameKey)
-
-
     const perGameLobby = await Game.find({ gameKey: gameKey })
     const tableExists = await Table.find({ gameKey })
     //const host = perGameLobby.host.toString();
@@ -117,6 +113,8 @@ exports.startGame = async (req, res) => {
   try {
     const gameKey = req.body.gameKey;
     const userId = req.body.userId
+    const selectedChars = red.body.selectedChars
+
     // Fetch the game by ID
     const game = await Game.find({ gameKey: gameKey });
 
@@ -129,16 +127,26 @@ exports.startGame = async (req, res) => {
     if (host !== userId) {
       return res.status(403).json({ message: 'Only the host can start the game' });
     }
-    // Ensure there are enough characters for the players
 
-    //const characters = await Character.find();
-    const charID = [1,2,3,4,5,6,7]
     // Shuffle the available characters array
-    const shuffledCharacters = shuffleArray(charID);
+    const shuffledCharacters = shuffleArray(selectedChars);
     const players = []
 
-    // Assign characters to players
-
+    if(game[0].players.length > 9) {
+      const extraPlayers = game[0].players - 9
+      if(extraPlayers >= 4 ) {
+        selectedChars.push('10,10,10,10,4')
+        console.log('extra Players',extraPlayers)
+        extraPlayers -= 5
+        }
+        if(extraPlayers < 4){
+      while(extraPlayers--) {
+        selectedChars.push('10');
+        }
+      }
+    } 
+    
+    // Assign a number to players
     const randomPlayer = () => {
       game[0].players.forEach((player) => {
         const randomIndex = Math.floor(Math.random() * shuffledCharacters.length);
