@@ -113,7 +113,7 @@ exports.startGame = async (req, res) => {
   try {
     const gameKey = req.body.gameKey;
     const userId = req.body.userId
-    const selectedChars = red.body.selectedChars
+    const selectedChars = req.body.selectedChars
 
     // Fetch the game by ID
     const game = await Game.find({ gameKey: gameKey });
