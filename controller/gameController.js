@@ -174,7 +174,7 @@ exports.startGame = async (req, res) => {
     const newTable = new Table({
       gameKey: gameKey,
       host: host,
-      nights: {night: 1, players: players}
+      nights: {players: players}
     });
     game.gameState = 'true';
     await newTable.save();
