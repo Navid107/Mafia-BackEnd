@@ -112,10 +112,10 @@ exports.charsGame = async (req, res) => {
 exports.startGame = async (req, res) => {
   try {
     const gameKey = req.body.gameKey;
-    const userId = req.body.userId
-    const selectedChars = req.body.selectedChars
+    const userId = req.body.userId;
+    const selectedChars = req.body.selectedChars;
 
-    const availableExtraChar =[9,9,10,9,9,10,9,9,10]
+    const availableExtraChar = [9, 9, 10, 9, 9, 10, 9, 9, 10];
 
     // Fetch the game by ID
     const game = await Game.find({ gameKey: gameKey });
@@ -124,26 +124,26 @@ exports.startGame = async (req, res) => {
     if (!game) {
       return res.status(404).json({ message: 'Game not found' });
     }
-    const host = game[0].host.toString()
+    const host = game[0].host.toString();
+
     // Check if the host is starting the game
     if (host !== userId) {
       return res.status(403).json({ message: 'Only the host can start the game' });
     }
-    console.log('game[0].players.length', game[0].players.length)
 
+    // Checking if players are more than 10
+    // If it is, we can add more characters to the game
     if (game[0].players.length > 9) {
-      let extraPlayers = game[0].players.length - 10;
-      console.log('extra players line 133', extraPlayers);
-    for(let i = 0; i < extraPlayers; i++) {
-      selectedChars.push(availableExtraChar[i])
-      console.log('for I loop ', selectedChars)
+      const extraPlayers = game[0].players.length - 10;
+      for (let i = 0; i < extraPlayers; i++) {
+        selectedChars.push(availableExtraChar[i]);
+      }
     }
 
-    }
-  console.log('selectedrewewrwere',selectedChars)
     // Shuffle the available characters array
     const shuffledCharacters = shuffleArray(selectedChars);
-    const players = []
+    // This variable saves every player with their character
+    const players = [];
 
     // Assign a number to players
     const randomPlayer = () => {
@@ -168,15 +168,14 @@ exports.startGame = async (req, res) => {
 
     randomPlayer();
 
-    console.log('this is playerChars', players);
+    console.log('This is playerChars:', players);
     // Save the player with assigned characters in a table
 
     const newTable = new Table({
       gameKey: gameKey,
       host: host,
-      players: players,
-
-    })
+      nights: {night: 1, players: players}
+    });
     game.gameState = 'true';
     await newTable.save();
 
@@ -186,6 +185,7 @@ exports.startGame = async (req, res) => {
     res.status(500).json({ message: 'Failed to start the game' });
   }
 };
+
 
 exports.tableGame = async (req, res) => {
   const gameKey = req.body.gameKey
