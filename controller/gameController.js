@@ -198,13 +198,13 @@ exports.tableGame = async (req, res) => {
     console.log('Hosts ', sits)
 
     if (sits[0].host === userId) {
-      console.log('host info sent')
+      //console.log('host info sent')
       res.status(200).json(sits[0])
     } else {
       sits[0].players.forEach(player => {
         if (player.userId === userId) {
           playerInfo.push(player)
-          console.log('player info sent')
+          //console.log('player info sent')
           res.json(playerInfo)
 
         }
@@ -215,6 +215,34 @@ exports.tableGame = async (req, res) => {
     res.status(500).json({ message: 'somethings went wrong' })
   }
 }
+
+exports.nightActions = async (req, res) => {
+  const gameKey = req.body.gameKey;
+  const userId = req.body.userId;
+  const nightNum = req.body.nightNum;
+  const updatedNightForm = req.body.updatedNightForm;
+  
+  console.log('userId', userId, 'gameKey', gameKey,
+   'Night numbers', nightNum, 'updated form', updatedNightForm);
+
+  try {
+    const updatedTable = await Table.findOneAndUpdate(
+      { gameKey: gameKey },
+      { $push: { [`night.${nightNum}`]: updatedNightForm } },
+      { new: true }
+    );
+      console.log('updatedTable ', updatedTable)
+    if (!updatedTable) {
+      return res.status(404).send('Table not found');
+    }
+
+    res.status(200).send('Night action successfully updated');
+  } catch (error) {
+    console.error('Error updating night action:', error);
+    res.status(500).send('Internal server error');
+  }
+};
+
 
 exports.lobbies = async (req, res) => {
   try {

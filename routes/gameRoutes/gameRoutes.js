@@ -13,6 +13,7 @@ router.post('/lobbies', gameController.lobbies);
 router.get('/character', gameController.charsGame);
 router.post('/start', gameController.startGame);
 router.post('/table' , gameController.tableGame);
+router.post('/table-update' , gameController.nightActions);
 
 
 module.exports = router;
