@@ -1,10 +1,15 @@
 const mongoose = require('mongoose');
 
 const playerSchema = new mongoose.Schema({
-  userId: String,
-  name: String,
-  charId: Number,
-  death: Boolean,
+  playerId: String,
+  playerName: String,
+  char: {
+    id: Number,
+    name: String,
+    side: String,
+    ability: Boolean,
+    death: Boolean,
+  }
 });
 
 const tableSchema = new mongoose.Schema({

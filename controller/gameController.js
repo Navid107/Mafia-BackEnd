@@ -115,66 +115,29 @@ exports.startGame = async (req, res) => {
     const userId = req.body.userId;
     const selectedChars = req.body.selectedChars;
 
-    const availableExtraChar = [9, 9, 10, 9, 9, 10, 9, 9, 10];
+    console.log('selected char ',selectedChars)
 
     // Fetch the game by ID
     const game = await Game.find({ gameKey: gameKey });
-
+    
     console.log('game host', game[0].host, 'userID', userId);
     if (!game) {
       return res.status(404).json({ message: 'Game not found' });
     }
+    const playersInLobby = game[0].players.slice()
+    console.log('players in lobby ', playersInLobby)
     const host = game[0].host.toString();
 
     // Check if the host is starting the game
     if (host !== userId) {
       return res.status(403).json({ message: 'Only the host can start the game' });
     }
-
-    // Checking if players are more than 10
-    // If it is, we can add more characters to the game
-    if (game[0].players.length > 9) {
-      const extraPlayers = game[0].players.length - 10;
-      for (let i = 0; i < extraPlayers; i++) {
-        selectedChars.push(availableExtraChar[i]);
-      }
-    }
-
-    // Shuffle the available characters array
-    const shuffledCharacters = shuffleArray(selectedChars);
-    // This variable saves every player with their character
-    const players = [];
-
-    // Assign a number to players
-    const randomPlayer = () => {
-      game[0].players.forEach((player) => {
-        if (shuffledCharacters.length > 0) {
-          const randomIndex = Math.floor(Math.random() * shuffledCharacters.length);
-          player.charID = shuffledCharacters.splice(randomIndex, 1)[0];
-
-          console.log('Assigned charID:', player.charID);
-
-          players.push({
-            userId: player.userId,
-            name: player.name,
-            charId: player.charID,
-            death: false,
-          });
-        } else {
-          console.error('Not enough characters available for players.');
-        }
-      });
-    };
-
-    randomPlayer();
-
-    console.log('This is playerChars:', players);
-    // Save the player with assigned characters in a table
-
+    const getUserWithRole = getACharacter(playersInLobby, selectedChars)
+    console.log('get user with roles',getUserWithRole);
     const newTable = new Table({
       gameKey: gameKey,
       host: host,
-      nights: {players: players}
+      nights: { players: getUserWithRole }
     });
     game.gameState = 'true';
     await newTable.save();
@@ -195,10 +158,11 @@ exports.tableGame = async (req, res) => {
   try {
     // Find Game by key and check if it exists or not
     const sits = await Table.find({ gameKey: gameKey });
-    console.log('Hosts ', sits)
+    //console.log('Hosts ', sits)
 
     if (sits[0].host === userId) {
-      //console.log('host info sent')
+      
+      console.log('host info sent', sits[0].nights.length-1 )
       res.status(200).json(sits[0])
     } else {
       sits[0].players.forEach(player => {
@@ -218,31 +182,38 @@ exports.tableGame = async (req, res) => {
 
 exports.nightActions = async (req, res) => {
   const gameKey = req.body.gameKey;
-  const userId = req.body.userId;
-  const nightNum = req.body.nightNum;
-  const updatedNightForm = req.body.updatedNightForm;
-  
+  const userId = req.body.hostId;
+  const players = req.body.players;
+
   console.log('userId', userId, 'gameKey', gameKey,
-   'Night numbers', nightNum, 'updated form', updatedNightForm);
+     'updated form', players);
 
   try {
-    const updatedTable = await Table.findOneAndUpdate(
-      { gameKey: gameKey },
-      { $push: { [`night.${nightNum}`]: updatedNightForm } },
-      { new: true }
-    );
-      console.log('updatedTable ', updatedTable)
-    if (!updatedTable) {
+    try {
+      const result = await Table.updateOne(
+        { gameKey: gameKey },
+        { $push: { nights: {players} } }
+      );
+      console.log('Document updated successfully:', result);
+    } catch (error) {
+      console.error('Error updating document:', error);
+    }
+    
+   /*  if (!updatedTable) {
       return res.status(404).send('Table not found');
     }
-
+   if(userId === updatedTable[0].host) {
+      await updatedTable.save();
+      console.log('updatedTable work',  );
+    } else {
+      console.log('updatedTable didnt work')
+    }*/
     res.status(200).send('Night action successfully updated');
   } catch (error) {
     console.error('Error updating night action:', error);
     res.status(500).send('Internal server error');
   }
 };
-
 
 exports.lobbies = async (req, res) => {
   try {
@@ -268,11 +239,98 @@ exports.lobbies = async (req, res) => {
   }
 }
 
-// Function to shuffle an array randomly
-function shuffleArray(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
+// this function assigns ever user with a char
+function getACharacter(userInLobby, selectedChars) {
+  let characters = selectedChars.slice();
+  let users = userInLobby.slice();
+  const availableExtraChar = [
+    {
+      id: 9,
+      name: 'Regular Citizen',
+      side: 'citizen',
+      ability: true,
+      death: false,
+    }, {
+      id: 9,
+      name: 'Regular Citizen',
+      side: 'citizen',
+      ability: true,
+      death: false,
+    },
+    {
+      id: 10,
+      name: 'Regular Mafia',
+      side: 'mafia',
+      ability: false,
+      death: false,
+    }, {
+      id: 9,
+      name: 'Regular Citizen',
+      side: 'citizen',
+      ability: true,
+      death: false,
+    }, {
+      id: 9,
+      name: 'Regular Citizen',
+      side: 'citizen',
+      ability: true,
+      death: false,
+    },
+    {
+      id: 10,
+      name: 'Regular Mafia',
+      side: 'mafia',
+      ability: false,
+      death: false,
+    }, {
+      id: 9,
+      name: 'Regular Citizen',
+      side: 'citizen',
+      ability: true,
+      death: false,
+    }, {
+      id: 9,
+      name: 'Regular Citizen',
+      side: 'citizen',
+      ability: true,
+      death: false,
+    }, {
+      id: 10,
+      name: 'Regular Mafia',
+      side: 'mafia',
+      ability: false,
+      death: false,
+    }, {
+      id: 9,
+      name: 'Regular Citizen',
+      side: 'citizen',
+      ability: true,
+      death: false,
+    },
+  ];
+
+  while (users.length > characters.length) {
+    characters.push(availableExtraChar[characters.length % availableExtraChar.length]);
   }
-  return array;
+  while (characters.length > users.length) {
+    users.push(userInLobby[users.length % userInLobby.length]);
+  }
+  characters = characters.sort(() => Math.random() - 0.5);
+  users = users.sort(() => Math.random() - 0.5);
+  const result = [];
+  for (let i = 0; i < users.length; i++) {
+    result.push({
+      playerId: users[i].userId,
+      playerName: users[i].name,
+      char: {
+        id: characters[i].id,
+        name: characters[i].name,
+        side: characters[i].side,
+        ability: characters[i].ability,
+        death: characters[i].death,
+      }
+    });
+  }
+  console.log(result)
+  return result;
 }
