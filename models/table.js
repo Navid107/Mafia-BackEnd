@@ -3,7 +3,6 @@ const mongoose = require('mongoose');
 const playerSchema = new mongoose.Schema({
   playerId: String,
   playerName: String,
-  gameOver: Boolean,
   char: {
     id: Number,
     name: String,
@@ -16,6 +15,7 @@ const playerSchema = new mongoose.Schema({
 const tableSchema = new mongoose.Schema({
   gameKey: String,
   host: String,
+  gameOver: String,
   nights: [{ players: [playerSchema] }],
 });
 

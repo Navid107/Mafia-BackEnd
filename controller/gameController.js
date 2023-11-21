@@ -137,7 +137,7 @@ exports.startGame = async (req, res) => {
     const newTable = new Table({
       gameKey: gameKey,
       host: host,
-      gameOver: false,
+      gameOver: '',
       nights: { players: getUserWithRole }
     });
     game.gameState = 'true';
@@ -149,7 +149,6 @@ exports.startGame = async (req, res) => {
     res.status(500).json({ message: 'Failed to start the game' });
   }
 };
-
 
 exports.tableGame = async (req, res) => {
   const gameKey = req.body.gameKey
@@ -183,23 +182,29 @@ exports.tableGame = async (req, res) => {
 exports.nightActions = async (req, res) => {
   const gameKey = req.body.gameKey;
   const userId = req.body.hostId;
-  const nightForm = req.body.players;
-  console.log('updated form', nightForm);
+  const nightAction = req.body.players;
+  console.log('updated form', nightAction);
 
   try {
     //checking the winning condition   
     const {gameOver, players} = await checkWinningCondition(nightForm);
     // Handle the game ending based on the winner
-    const verifyHost = await Table.findOne({ gameKey: gameKey, host: userId });
-    if (verifyHost) { 
-    const result = await Table.updateOne(
-      { gameKey: gameKey },
-      { host: userId },
-      { $push: { nights: { players } } }
-    );
+    const verifyHost = await Table.findOne(
+      { gameKey: gameKey, host: userId });
+
+    if (!gameOver) {
+      const result = await Table.updateOne(
+        { gameKey: gameKey },
+        {
+          $set: { gameOver: gameOver },
+          $push: { nights: { players } }
+        }
+      );
     } else {
-      console.log('theres an error with verify the host')
-      return res.sendStatus(401);
+      const result = await Table.updateOne(
+        { gameKey: gameKey },
+        { $push: { nights: { players } } }
+      );
     }
     res.status(200).send('Night action successfully updated');
   } catch (error) {
@@ -312,7 +317,7 @@ const checkWinningCondition = async (nightAction) => {
   const citizenCount = alivePlayers.filter((player) => player.char.side === 'citizen').length;
 
   const result = {
-    gameOver: false,
+    gameOver: '',
     players: nightAction,
   };
 
@@ -324,7 +329,7 @@ const checkWinningCondition = async (nightAction) => {
         death: player.char.side === 'citizen',
       },
     }));
-    result.gameOver = true;
+    result.gameOver = 'Mafia';
   } else if (citizenCount > 0 && mafiaCount === 0) {
     result.players = alivePlayers.map((player) => ({
       ...player,
@@ -333,10 +338,10 @@ const checkWinningCondition = async (nightAction) => {
         death: player.char.side === 'mafia',
       },
     }));
-    result.gameOver = true;
+    result.gameOver = 'Citizen';
   } else {
     result.players = alivePlayers
-    result.gameOver = false;
+    result.gameOver = '';
   }
 
   return result;
