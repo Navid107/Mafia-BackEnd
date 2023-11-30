@@ -187,23 +187,25 @@ exports.nightActions = async (req, res) => {
 
   try {
     //checking the winning condition   
-    const {gameOver, players} = await checkWinningCondition(nightForm);
+    const {gameOver, players} = await checkWinningCondition(nightAction);
+    console.log('gameOver', gameOver,'players', players);
     // Handle the game ending based on the winner
     const verifyHost = await Table.findOne(
       { gameKey: gameKey, host: userId });
 
     if (!gameOver) {
-      const result = await Table.updateOne(
+      await Table.updateOne(
+        { gameKey: gameKey },
+        { $push: { nights: { players } } }
+        
+      );
+    } else {
+      await Table.updateOne(
         { gameKey: gameKey },
         {
           $set: { gameOver: gameOver },
           $push: { nights: { players } }
         }
-      );
-    } else {
-      const result = await Table.updateOne(
-        { gameKey: gameKey },
-        { $push: { nights: { players } } }
       );
     }
     res.status(200).send('Night action successfully updated');
@@ -316,7 +318,7 @@ const checkWinningCondition = async (nightAction) => {
   const mafiaCount = alivePlayers.filter((player) => player.char.side === 'mafia').length;
   const citizenCount = alivePlayers.filter((player) => player.char.side === 'citizen').length;
 
-  const result = {
+  let result = {
     gameOver: '',
     players: nightAction,
   };
@@ -340,7 +342,7 @@ const checkWinningCondition = async (nightAction) => {
     }));
     result.gameOver = 'Citizen';
   } else {
-    result.players = alivePlayers
+    result.players = nightAction
     result.gameOver = '';
   }
 
