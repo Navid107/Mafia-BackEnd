@@ -14,6 +14,7 @@ router.get('/character', gameController.charsGame);
 router.post('/start', gameController.startGame);
 router.post('/table' , gameController.tableGame);
 router.post('/table-update' , gameController.nightActions);
+router.delete('/table/:gameKey', gameController.deleteTable);
 
 
 module.exports = router;

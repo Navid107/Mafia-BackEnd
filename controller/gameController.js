@@ -215,6 +215,29 @@ exports.nightActions = async (req, res) => {
   }
 };
 
+exports.deleteTable = async (req, res) => {
+  const { gameKey } = req.params;
+
+  try {
+    // Find and delete the document with the specified gameKey
+    const result = await Table.deleteOne({ gameKey });
+
+    if (result.deletedCount > 0) {
+      // Send success response
+      res.status(200).json({ message: `Table entry with gameKey '${gameKey}' has been deleted.` });
+    } else {
+      // Send 404 response if no entry found
+      res.status(404).json({ message: `No table entry found with gameKey '${gameKey}'.` });
+    }
+  } catch (error) {
+    console.error('Error deleting game:', error);
+
+    // Send 500 response for other errors
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+}
+
+
 // this function assigns ever user with a char
 function getACharacter(userInLobby, selectedChars) {
   let characters = selectedChars.slice();
@@ -348,7 +371,6 @@ const checkWinningCondition = async (nightAction) => {
 
   return result;
 };
-
 
 exports.lobbies = async (req, res) => {
   try {
