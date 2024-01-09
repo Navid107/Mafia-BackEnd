@@ -1,5 +1,6 @@
-const mongoose = require('mongoose');
+const mongoose = require('mongoose')
 
+// Players assigning to a character format Schema
 const playerSchema = new mongoose.Schema({
   playerId: String,
   playerName: String,
@@ -8,17 +9,17 @@ const playerSchema = new mongoose.Schema({
     name: String,
     side: String,
     ability: Boolean,
-    death: Boolean,
+    death: Boolean
   }
-});
-
+})
+// Players assigned with character Schema
 const tableSchema = new mongoose.Schema({
   gameKey: String,
   host: String,
   gameOver: String,
-  nights: [{ players: [playerSchema] }],
-});
+  nights: [{ players: [playerSchema] }]
+})
 
-const Table = mongoose.model('Table', tableSchema);
+const Table = mongoose.model('Table', tableSchema)
 
-module.exports = Table;
+module.exports = Table

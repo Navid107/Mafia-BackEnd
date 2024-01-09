@@ -6,6 +6,7 @@ require('dotenv').config()
 // Access the secret key using process.env
 const secretKey = process.env.ACCESS_TOKEN_SECRET
 const secretRfTkn = process.env.REFRESH_TOKEN_SECRET
+
 // Register controller function
 exports.register = async (req, res) => {
   try {
@@ -29,7 +30,7 @@ exports.register = async (req, res) => {
 
     // Save the new user to the database
     await newUser.save()
-    console.log('line 36', newUser)
+
     // Respond with a success message
     res.json({ message: 'User registered successfully' })
   } catch (error) {
@@ -45,7 +46,6 @@ exports.login = async (req, res) => {
 
     // Check if the user exists
     const user = await User.findOne({ email })
-    console.log('Found User', user)
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' })
@@ -53,7 +53,6 @@ exports.login = async (req, res) => {
 
     // Compare the hashed passwords
     const isPasswordValid = await bcrypt.compare(password, user.password)
-    console.log('line 62', password)
 
     if (!isPasswordValid) {
       return res.status(401).json({ error: 'Invalid password' })
@@ -70,32 +69,12 @@ exports.login = async (req, res) => {
     )
 
     const refreshToken = jwt.sign({ userId: user._id }, secretRfTkn, {
-      expiresIn: '24h'
+      expiresIn: '4h'
     })
 
     // Respond with a success message and the JWT
     res.cookie('refreshToken', refreshToken, { httpOnly: true })
     res.json({ message: 'Logged in successfully', accessToken })
-  } catch (error) {
-    res.status(500).json({ error: 'Something went wrong' })
-  }
-}
-
-// Profile controller function
-exports.user = async (req, res) => {
-  try {
-    // Get the authenticated user's ID from the request
-    const userId = req.userId
-
-    // Fetch the user's profile data from the database
-    const user = await User.findById(userId)
-
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' })
-    }
-
-    // Return the user's profile data
-    res.json(user)
   } catch (error) {
     res.status(500).json({ error: 'Something went wrong' })
   }

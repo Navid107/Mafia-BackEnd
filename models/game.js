@@ -1,12 +1,12 @@
-const mongoose = require('mongoose');
+const mongoose = require('mongoose')
 
+//PreGame Lobby Schema
 const gameSchema = new mongoose.Schema({
   gameKey: String,
   host: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   lobbyName: String,
   players: Array,
   gameState: String
-  // Add other game properties as needed
-});
+})
 
-module.exports = mongoose.model('Game', gameSchema);
+module.exports = mongoose.model('Game', gameSchema)

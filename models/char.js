@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+//Character Schema "Not in used"
 const characterSchema = new mongoose.Schema({
   name: String,
   side: String,
