@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require('mongoose')
 
 //Character Schema "Not in used"
 const characterSchema = new mongoose.Schema({
@@ -7,10 +7,10 @@ const characterSchema = new mongoose.Schema({
   ability: String,
   image: {
     data: Buffer,
-    contentType: String,
-  },
-});
+    contentType: String
+  }
+})
 
-const Character = mongoose.model('Character', characterSchema);
+const Character = mongoose.model('Character', characterSchema)
 
-module.exports = Character;
+module.exports = Character

@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const tokenCTR = require('../controller/refreshToken')
+const verifyJWT = require('../middleware/verifyJWT')
 
 // Route for token refresh
-router.get('/',tokenCTR.refreshToken)
+router.get('/',verifyJWT.refreshAccessToken)
 
   
 module.exports = router;

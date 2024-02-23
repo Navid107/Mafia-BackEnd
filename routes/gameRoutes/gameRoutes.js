@@ -6,7 +6,7 @@ const gameController = require('../../controller/gameController.js')
 router.post('/host', gameController.hostGame)
 router.post('/join', gameController.joinGame)
 //PreGame lobby
-router.post('/lobby', gameController.lobbyGame)
+router.post('/lobby', gameController.perGameLobby)
 //Hosted/Joined lobbies in profile
 router.post('/lobbies', gameController.lobbies)
 

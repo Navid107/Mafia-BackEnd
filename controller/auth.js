@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const User = require('../models/user.js')
+const ExpireToken = require('../models/expiredToken.js')
 require('dotenv').config()
 
 // Access the secret key using process.env
@@ -9,19 +10,19 @@ const secretRfTkn = process.env.REFRESH_TOKEN_SECRET
 
 // Register controller function
 exports.register = async (req, res) => {
+  const { name, email, password } = req.body
+
+  // Check if the user already exists
+  const existingUser = await User.findOne({ email: req.body.email })
+  if (existingUser) {
+    return res.status(400).json({ error: 'User already exists' })
+  }
+
   try {
-    const { name, email, password } = req.body
-
-    // Check if the user already exists
-    const existingUser = await User.findOne({ email: req.body.email })
-    if (existingUser) {
-      return res.status(400).json({ error: 'User already exists' })
-    }
-
     // Hash the password using the generated salt
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    // Create a new user
+    // Store a new user
     const newUser = new User({
       name,
       email,
@@ -52,30 +53,63 @@ exports.login = async (req, res) => {
     }
 
     // Compare the hashed passwords
-    const isPasswordValid = await bcrypt.compare(password, user.password)
+    const match = await bcrypt.compare(password, user.password)
 
-    if (!isPasswordValid) {
-      return res.status(401).json({ error: 'Invalid password' })
+    if (match) {
+      // Generate a JSON Web Token (JWT) with the userId as the payload
+      const accessToken = jwt.sign(
+        {
+          user: user.name,
+          userId: user._id
+        },
+        secretKey,
+        { expiresIn: '2h' }
+      )
+      const refreshToken = jwt.sign({ userId: user._id }, secretRfTkn, {
+        expiresIn: '4h'
+      })
+      // Respond with a success message and the JWT
+      res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none',
+        maxAge: 24 * 60 * 60 * 1000
+      })
+      res.json({ accessToken })
+    } else {
+      res.status(401).json({ error: 'Invalid password' })
     }
-
-    // Generate a JSON Web Token (JWT) with the userId as the payload
-    const accessToken = jwt.sign(
-      {
-        user: user.name,
-        userId: user._id
-      },
-      secretKey,
-      { expiresIn: '30m' }
-    )
-
-    const refreshToken = jwt.sign({ userId: user._id }, secretRfTkn, {
-      expiresIn: '4h'
-    })
-
-    // Respond with a success message and the JWT
-    res.cookie('refreshToken', refreshToken, { httpOnly: true })
-    res.json({ message: 'Logged in successfully', accessToken })
   } catch (error) {
     res.status(500).json({ error: 'Something went wrong' })
   }
+}
+
+exports.logout = async (req, res) => {
+  try {
+     // get the session cookie from request header
+    const authHeader = req.headers['cookie']
+    if (!authHeader) return res.sendStatus(204) // No content
+    // If there is, split the cookie string to get the actual jwt token
+    const cookie = authHeader.split('=')[1] 
+    const accessToken = cookie.split(';')[0]
+    const checkIfTokenExpired = await ExpireToken.findOne({
+      token: accessToken
+    }) // Check if that token is ExpireToken listed
+    // if true, send a no content response.
+    if (checkIfTokenExpired) return res.sendStatus(204)
+    // otherwise blacklist token
+    const newExpireToken = new ExpireToken({
+      token: accessToken
+    })
+    await newExpireToken.save()
+    // Also clear request cookie on client
+    res.setHeader('Clear-Site-Data', '"cookies"')
+    res.status(200).json({ message: 'You are logged out!' })
+  } catch (err) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Internal Server Error'
+    })
+  }
+  res.end()
 }

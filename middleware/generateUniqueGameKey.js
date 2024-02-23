@@ -1,4 +1,3 @@
-// Generation gameKeys
 function generateUniqueGameKey () {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
   let gameKey = ''

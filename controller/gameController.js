@@ -1,20 +1,15 @@
 const Game = require('../models/game.js')
-const User = require('../models/user.js')
 const Generate = require('../middleware/generateUniqueGameKey.js')
 const Table = require('../models/table.js')
 
-//Hosting a lobby
+// Hosting a lobby
 exports.hostGame = async (req, res) => {
   try {
-    const userId = req.body.userId
+    const userId = req.userId
     const lobbyName = req.body.lobbyName
-    //console.log('userID', userId)
     // Generate a unique game key
     const gameKey = Generate()
 
-    // Find the user by ID
-    const user = await User.findOne({ userId })
-    console.log('user ', user)
     // Create a new game session in the database with the game key and host user
     const newGame = new Game({
       gameKey,
@@ -35,11 +30,11 @@ exports.hostGame = async (req, res) => {
   }
 }
 
-//User can join lobbies with the gameKeys
+// User can join lobbies with the gameKeys
 exports.joinGame = async (req, res) => {
   try {
     const gameKey = req.body.gameKey
-    const userId = req.body.userId
+    const userId = req.userId
     const username = req.body.name
 
     // Validate the game key and find the game
@@ -69,8 +64,8 @@ exports.joinGame = async (req, res) => {
   }
 }
 
-//This function sends preGameLobby
-exports.lobbyGame = async (req, res) => {
+// This function sends preGameLobby
+exports.perGameLobby = async (req, res) => {
   try {
     const gameKey = req.body.gameKey
     const perGameLobby = await Game.find({ gameKey: gameKey })
@@ -82,25 +77,22 @@ exports.lobbyGame = async (req, res) => {
   }
 }
 
-//When everyone joins the lobby and host start the game
-//and every player receives a character
+// When everyone joins the lobby and host starts the game
+// and every player receives a character
 exports.startGame = async (req, res) => {
   try {
     const gameKey = req.body.gameKey
     const userId = req.body.hostId
     const selectedChars = req.body.selectedChars
-    //console.log('selected char ', selectedChars)
 
     // Fetch the game by ID
     const game = await Game.find({ gameKey: gameKey })
-    //console.log('game host', game[0].host, 'userID', userId)
 
     // Verify that the user is authorized to start the game
     if (!game) {
       return res.status(404).json({ message: 'Game not found' })
     }
     const playersInLobby = game[0].players.slice()
-    //console.log('players in lobby ', playersInLobby)
     const host = game[0].host.toString()
 
     // Check if the host is starting the game
@@ -110,7 +102,6 @@ exports.startGame = async (req, res) => {
         .json({ message: 'Only the host can start the game' })
     }
     const getUserWithRole = getACharacter(playersInLobby, selectedChars)
-    //console.log('get user with roles', getUserWithRole)
 
     // Add the player character information to the game object and save it to the database
     const newTable = new Table({
@@ -138,55 +129,53 @@ exports.startGame = async (req, res) => {
   }
 }
 
-//Sending the game data to Host and every Players
+// Sending the game data to Host and every Players
 exports.tableGame = async (req, res) => {
   const gameKey = req.body.gameKey
   const userId = req.body.userId
 
-  //pushing everyone player beside on their userID
-  //and send it to front end
+  // pushing every player beside on their userID
+  // and send it to the front end
   const playerInfo = []
 
   try {
     // Find Game by key and check if it exists or not
     const seats = await Table.find({ gameKey: gameKey })
-    //if the userId matches the hostId, it will send hostData
+    // if the userId matches the hostId, it will send hostData
     if (seats[0].host === userId) {
       res.status(200).json(seats[0])
     } else {
-      //check userId and send only that player's data
+      // check userId and send only that player's data
       seats[0].nights[0].players.forEach(player => {
         if (player.playerId === userId) {
           playerInfo.push(player)
-          res.json(playerInfo)
+          res.status(200).json(playerInfo)
         }
       })
     }
   } catch (err) {
     console.log('ERROR', err)
-    res.status(500).json({ message: 'somethings went wrong' })
+    res.status(500).json({ message: 'Something went wrong' })
   }
 }
 
-//NightAction form update and updating the game
+// NightAction form update and updating the game
 exports.nightActions = async (req, res) => {
   const gameKey = req.body.gameKey
   const nightAction = req.body.players
-  //console.log('updated form', nightAction)
 
   try {
-    //checking the winning condition
+    // checking the winning condition
     const { gameOver, players } = await checkWinningCondition(nightAction)
-    //console.log('gameOver', gameOver, 'players', players)
 
-    //Checking if the game has winner
+    // Checking if the game has a winner
     if (!gameOver) {
       await Table.updateOne(
         { gameKey: gameKey },
         { $push: { nights: { players } } }
       )
     } else {
-      //Updating the night action
+      // Updating the night action
       await Table.updateOne(
         { gameKey: gameKey },
         {
@@ -202,7 +191,7 @@ exports.nightActions = async (req, res) => {
   }
 }
 
-//Deleting the game
+// Deleting the table
 exports.deleteTable = async (req, res) => {
   const { gameKey } = req.params
 
@@ -230,10 +219,29 @@ exports.deleteTable = async (req, res) => {
   }
 }
 
-//This function assigns ever user with a char
+// The hosted/joined Lobbies that show in the profile
+exports.lobbies = async (req, res) => {
+  try {
+    const userId = req.userId
+    console.log('userId ', userId)
+    // User joined Lobbies
+    const joined = await Game.find({ 'players.userId': userId })
+    // User Hosted Lobbies
+    const hosted = await Game.find({ host: userId })
+
+    res.status(200).json({ hosted, joined })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ message: 'Failed to retrieve lobbies' })
+  }
+}
+
+// This function assigns every user with a character
 function getACharacter (userInLobby, selectedChars) {
+  // Make copies of selected characters and lobby users arrays
   let characters = selectedChars.slice()
   let users = userInLobby.slice()
+  // Available extra characters to fill in if players exceed character count
   const availableExtraChar = [
     {
       id: 8,
@@ -306,17 +314,21 @@ function getACharacter (userInLobby, selectedChars) {
       death: false
     }
   ]
-  //If the numbers of the players are larger, this function adds more chars
+  // If the numbers of the players are larger, this function adds more chars
   while (users.length > characters.length) {
     characters.push(
       availableExtraChar[characters.length % availableExtraChar.length]
     )
   }
+  // Fill in users array if there are fewer players than characters
   while (characters.length > users.length) {
     users.push(userInLobby[users.length % userInLobby.length])
   }
+  // Randomize the order of characters and users arrays
   characters = characters.sort(() => Math.random() - 0.5)
   users = users.sort(() => Math.random() - 0.5)
+
+  // Create an array to store the result of player and character assignment
   const result = []
   for (let i = 0; i < users.length; i++) {
     result.push({
@@ -331,11 +343,10 @@ function getACharacter (userInLobby, selectedChars) {
       }
     })
   }
-  //console.log(result)
   return result
 }
 
-//Checking of we have winners
+// Checking if we have winners
 const checkWinningCondition = async nightAction => {
   const alivePlayers = nightAction.filter(player => player.char.death === false)
 
@@ -351,7 +362,7 @@ const checkWinningCondition = async nightAction => {
     gameOver: '',
     players: nightAction
   }
-  //If Mafia wins
+  // If Mafia wins
   if (mafiaCount >= citizenCount) {
     result.players = alivePlayers.map(player => ({
       ...player,
@@ -362,7 +373,7 @@ const checkWinningCondition = async nightAction => {
     }))
     result.gameOver = 'Mafia'
   }
-  //If Citizen wins
+  // If Citizen wins
   else if (citizenCount > 0 && mafiaCount === 0) {
     result.players = alivePlayers.map(player => ({
       ...player,
@@ -373,27 +384,11 @@ const checkWinningCondition = async nightAction => {
     }))
     result.gameOver = 'Citizen'
   }
-  //If no winners
+  // Game continuos
   else {
     result.players = nightAction
     result.gameOver = ''
   }
 
   return result
-}
-
-//The hosted/joined Lobbies that show in profile
-exports.lobbies = async (req, res) => {
-  try {
-    const userId = req.body.userId
-    //User joined Lobbies
-    const joined = await Game.find({ 'players.userId': userId })
-    //User Hosted Lobbies
-    const hosted = await Game.find({ host: userId })
-
-    res.status(200).json({ hosted, joined })
-  } catch (err) {
-    console.error(err)
-    res.status(500).json({ message: 'Failed to retrieve lobbies' })
-  }
 }
