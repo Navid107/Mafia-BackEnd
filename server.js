@@ -7,7 +7,7 @@ const cookieParser = require('cookie-parser')
 const app = express()
 const servers = http.createServer(app)
 const MONGODB_URI = process.env.MONGODB_URI
-const frontEnd = process.env.ORIGIN_HOST
+const FRONTEND = process.env.ORIGIN_HOST
 const port = process.env.PORT
 
 require('dotenv').config()
@@ -15,7 +15,7 @@ app.use(bodyParser.json())
 
 const cors = require('cors')
 const corsOption = {
-  origin: frontEnd,
+  origin: FRONTEND,
   credentials: true
 }
 app.use(cors(corsOption))
