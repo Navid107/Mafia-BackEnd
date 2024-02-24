@@ -11,9 +11,10 @@ const secretRfTkn = process.env.REFRESH_TOKEN_SECRET
 // Register controller function
 exports.register = async (req, res) => {
   const { name, email, password } = req.body
-
+  //Turning every letter into lower case
+  const lowerCaseEmail = email.toLowerCase()
   // Check if the user already exists
-  const existingUser = await User.findOne({ email: req.body.email })
+  const existingUser = await User.findOne({ email: lowerCaseEmail })
   if (existingUser) {
     return res.status(400).json({ error: 'User already exists' })
   }
@@ -25,7 +26,7 @@ exports.register = async (req, res) => {
     // Store a new user
     const newUser = new User({
       name,
-      email,
+      email: lowerCaseEmail,
       password: hashedPassword
     })
 
@@ -44,9 +45,11 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body
+    //Turning every letter into lower case
+    const lowerCaseEmail = email.toLowerCase()
 
     // Check if the user exists
-    const user = await User.findOne({ email })
+    const user = await User.findOne({ email: lowerCaseEmail })
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' })
@@ -86,11 +89,11 @@ exports.login = async (req, res) => {
 
 exports.logout = async (req, res) => {
   try {
-     // get the session cookie from request header
+    // get the session cookie from request header
     const authHeader = req.headers['cookie']
     if (!authHeader) return res.sendStatus(204) // No content
     // If there is, split the cookie string to get the actual jwt token
-    const cookie = authHeader.split('=')[1] 
+    const cookie = authHeader.split('=')[1]
     const accessToken = cookie.split(';')[0]
     const checkIfTokenExpired = await ExpireToken.findOne({
       token: accessToken
