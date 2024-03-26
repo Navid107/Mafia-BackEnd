@@ -1,7 +1,8 @@
 const Game = require('../models/game.js')
 const Generate = require('../middleware/generateUniqueGameKey.js')
 const Table = require('../models/table.js')
-
+const User = require('../models/user.js')
+const { ObjectId } = require('mongodb')
 // Hosting a lobby
 exports.hostGame = async (req, res) => {
   try {
@@ -20,7 +21,6 @@ exports.hostGame = async (req, res) => {
 
     // Save the game session to the database
     await newGame.save()
-
     res
       .status(201)
       .json({ message: 'Game created successfully', gameKey, lobbyName })
@@ -56,7 +56,8 @@ exports.joinGame = async (req, res) => {
     game.players.push({ userId: userId, name: username })
     //console.log('line 56', userId, username)
     await game.save()
-    res.status(200).json({ message: 'Joined the game successfully' })
+
+    res.status(201).json({ message: 'Joined the game successfully' })
   } catch (err) {
     console.error(err)
 
@@ -142,11 +143,11 @@ exports.tableGame = async (req, res) => {
     // Find Game by key and check if it exists or not
     const seats = await Table.find({ gameKey: gameKey })
     // if the userId matches the hostId, it will send hostData
-    if (seats[0].host === userId) {
+    if (seats[0]?.host === userId) {
       res.status(200).json(seats[0])
     } else {
       // check userId and send only that player's data
-      seats[0].nights[0].players.forEach(player => {
+      seats[0]?.nights[0].players.forEach(player => {
         if (player.playerId === userId) {
           playerInfo.push(player)
           res.status(200).json(playerInfo)
@@ -167,7 +168,14 @@ exports.nightActions = async (req, res) => {
   try {
     // checking the winning condition
     const { gameOver, players } = await checkWinningCondition(nightAction)
-
+    //Updates players stats when it gets called 
+    const updatePlayerStats = async (players) => {
+      for (const player of players) {
+        //updateStats function receives 3 arguments, player,side,winner team.
+        await updateStats(player.playerId, player.char.side, gameOver);
+      }
+    };
+    
     // Checking if the game has a winner
     if (!gameOver) {
       await Table.updateOne(
@@ -183,6 +191,15 @@ exports.nightActions = async (req, res) => {
           $push: { nights: { players } }
         }
       )
+     //Updating players stats if theres winning 
+        .then(() => {
+          updatePlayerStats(nightAction)
+        })
+        .catch((error) => {
+          throw error;
+        });
+      
+      // Getting all players in the game to see who won
     }
     res.status(200).send('Night action successfully updated')
   } catch (error) {
@@ -364,25 +381,16 @@ const checkWinningCondition = async nightAction => {
   }
   // If Mafia wins
   if (mafiaCount >= citizenCount) {
-    result.players = alivePlayers.map(player => ({
-      ...player,
-      char: {
-        ...player.char,
-        death: player.char.side === 'citizen'
-      }
-    }))
-    result.gameOver = 'Mafia'
+    result.players = nightAction.filter(player => 
+      player.char.side === 'mafia')
+    result.gameOver = 'mafia'
   }
+
   // If Citizen wins
   else if (citizenCount > 0 && mafiaCount === 0) {
-    result.players = alivePlayers.map(player => ({
-      ...player,
-      char: {
-        ...player.char,
-        death: player.char.side === 'mafia'
-      }
-    }))
-    result.gameOver = 'Citizen'
+    result.players = nightAction.filter(player => 
+      player.char.side === 'citizen')
+    result.gameOver = 'citizen'
   }
   // Game continuos
   else {
@@ -392,3 +400,28 @@ const checkWinningCondition = async nightAction => {
 
   return result
 }
+//PlayerStat update function
+ const updateStats = async (player, side, winnerTeam) =>{
+  const total_side = `total_${side}` //total game on side
+  const side_wins = `${side}_wins`  //wins
+  const side_loses = `${side}_loses`//loses
+
+  const playerStat = await User.findOne({ '_id': player })
+  if (!playerStat) {
+    console.error('User not found');
+    return;
+  }
+  const stats = playerStat.stats
+  if( side === winnerTeam ) {
+    stats[total_side] += 1;
+    stats[side_wins] += 1;
+    console.log(stats)
+  } else {
+    stats[total_side] += 1;
+    stats[side_loses] += 1;
+    console.log(stats)
+  }
+  await playerStat.save();
+}
+  
+

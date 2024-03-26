@@ -27,7 +27,15 @@ exports.register = async (req, res) => {
     const newUser = new User({
       name,
       email: lowerCaseEmail,
-      password: hashedPassword
+      password: hashedPassword,
+      stats: { 
+        total_mafia:  0, 
+        mafia_wins:  0, 
+        mafia_loses:  0, 
+        total_citizen: 0,
+        citizen_wins:  0, 
+        citizen_loses:  0, 
+      }
     })
 
     // Save the new user to the database
@@ -63,7 +71,8 @@ exports.login = async (req, res) => {
       const accessToken = jwt.sign(
         {
           user: user.name,
-          userId: user._id
+          userId: user._id,
+          stats: user.stats
         },
         secretKey,
         { expiresIn: '2h' }
