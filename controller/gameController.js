@@ -387,7 +387,7 @@ const checkWinningCondition = async nightAction => {
   }
 
   // If Citizen wins
-  else if (citizenCount > 0 && mafiaCount === 0) {
+  else if (citizenCount > 0 && mafiaCount <= 0) {
     result.players = nightAction.filter(player => 
       player.char.side === 'citizen')
     result.gameOver = 'citizen'
